@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Приложение для запросов к Picsum</title>
+</head>
+<body>
+    <h1>Приложение для запросов к Picsum</h1>
+    <input type="number" id="pageNumber" placeholder="Номер страницы">
+    <input type="number" id="limit" placeholder="Лимит">
+    <button id="requestBtn">Запрос</button>
+    <div id="imageList"></div>
+
+    <script>
+        const pageNumberInput = document.getElementById('pageNumber');
+        const limitInput = document.getElementById('limit');
+        const requestBtn = document.getElementById('requestBtn');
+        const imageList = document.getElementById('imageList');
+
+        requestBtn.addEventListener('click', () => {
+            const pageNumber = parseInt(pageNumberInput.value);
+            const limit = parseInt(limitInput.value);
+
+            if (isNaN(pageNumber) || pageNumber < 1 || pageNumber > 10) {
+                imageList.innerHTML = 'Номер страницы вне диапазона от 1 до 10';
+                return;
+            }
+
+            if (isNaN(limit) || limit < 1 || limit > 10) {
+                imageList.innerHTML = 'Лимит вне диапазона от 1 до 10';
+                return;
+            }
+
+            fetch(`https://picsum.photos/v2/list?page=${pageNumber}&limit=${limit}`)
+                .then(response => response.json())
+                .then(data => {
+                    const images = data.map(item => `<img src="${item.download_url}" width="100" height="100">`).join('');
+                    imageList.innerHTML = images;
+                    localStorage.setItem('lastRequest', JSON.stringify({ pageNumber, limit }));
+                })
+                .catch(error => {
+                    imageList.innerHTML = 'Произошла ошибка при загрузке изображений';
+                    console.error(error);
+                });
+        });
+
+        // Проверка наличия данных в localStorage при загрузке страницы
+        window.addEventListener('load', () => {
+            const lastRequest = JSON.parse(localStorage.getItem('lastRequest'));
+            if (lastRequest) {
+                pageNumberInput.value = lastRequest.pageNumber;
+                limitInput.value = lastRequest.limit;
+                requestBtn.click(); // Вызываем клик на кнопке для выполнения последнего запроса
+            }
+        });
+    </script>
+</body>
+</html>
